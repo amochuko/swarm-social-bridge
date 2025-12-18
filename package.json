@@ -1,0 +1,12 @@
+{
+  "name": "swarm-social-bridge",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "turbo": "^1.10.3"
+  }
+}
