@@ -136,6 +136,32 @@ contract SwarmRegistry is IRegistry {
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
 
+    /*/////////////////////////////////////////////////////
+                    SIGNATURE-BASE RELAY PUBLISH
+    /////////////////////////////////////////////////////////*/
+
+    function publishWithSig(
+        bytes32 bzzHash,
+        string calldata metadataUri,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external isValidBzzHash(bzzHash) isRegistered(bzzHash) {
+        if (block.timestamp > deadline) revert SignatureExpired();
+
+        address signer = _recoverSigner(bzzHash, metadataUri, nonces[msg.sender], deadline, v, r, s);
+
+        if (signer == address(0)) revert InvalidSignature();
+
+        nonces[signer]++;
+
+        _setPublisher(bzzHash, signer);
+        _setMetadata(bzzHash, metadataUri);
+
+        emit ManifestPublished(signer, bzzHash, metadataUri, block.timestamp);
+    }
+
     /// @notice Get metadata
     /// @param bzzHash The reference hash
     function getMetadata(bytes32 bzzHash) public view returns (string memory) {
