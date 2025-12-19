@@ -48,7 +48,7 @@ contract SwarmRegistry is IRegistry {
     }
 
     function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal isValidBzzHash(bzzHash) {
-        require(bytes(metadataUri).length > 0, "Invalide length");
+        require(bytes(metadataUri).length > 0, "Invalid length");
 
         _metadataOf[bzzHash] = metadataUri;
     }
