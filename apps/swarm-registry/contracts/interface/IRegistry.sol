@@ -7,6 +7,7 @@ interface IRegistry {
     function getPublisher(bytes32 bzzHash) external view returns (address);
     function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external;
     function publishWithSig(
+        address signer,
         bytes32 bzzHash,
         string calldata metadataUri,
         uint256 deadline,
