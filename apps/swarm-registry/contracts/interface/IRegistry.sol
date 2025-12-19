@@ -15,5 +15,5 @@ interface IRegistry {
         bytes32 r,
         bytes32 s
     ) external;
-    
+    function getNonce(address signer) external view returns (uint256);
 }
