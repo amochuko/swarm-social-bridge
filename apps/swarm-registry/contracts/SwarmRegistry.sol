@@ -92,8 +92,35 @@ contract SwarmRegistry is IRegistry {
         _metadataOf[bzzHash] = metadataUri;
     }
 
+/**
+ * Recover signer address
+ * @param bzzHash the reference hash
+ * @param metadataUri the metadata URI pointed to
+ * @param nonce the tx count
+ * @param deadline the signature expiry timestamp (unix)
+ * @param v recovery id (27 or 28)
+ * @param r first 32 bytes of the ECDSA signature
+ * @param s second 32 bytes of the ECDSA signature
+ */
+    function _recoverSigner(
+        bytes32 bzzHash,
+        string calldata metadataUri,
+        uint256 nonce,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal view returns (address) {
+        bytes32 structHash =
+            keccak256(abi.encode(PUBLISH_TYPEHASH, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline));
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
+
+        return ecrecover(digest, v, r, s);
+    }
+
     /*////////////////////////////////
-                    DIRECT PUBLIC
+                    DIRECT PUBLISH
     ///////////////////////////////*/
 
     /// @notice Publish a Swarm manifest directly (caller pays gas)
