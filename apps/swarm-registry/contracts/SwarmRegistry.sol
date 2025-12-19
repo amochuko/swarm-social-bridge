@@ -34,18 +34,20 @@ contract SwarmRegistry is IRegistry {
         _;
     }
 
+    modifier isValidBzzHash(bytes32 bzzHash) {
+        require(bzzHash != bytes32(0), "Invalid hash");
+        _;
+    }
+
     /*//////////////////////////////////
             INTERNAL
     /////////////////////////////*/
 
-    function _setPublisher(bytes32 bzzHash, address publisher) internal {
-        require(bzzHash != bytes32(0), "Invalide hash");
-
+    function _setPublisher(bytes32 bzzHash, address publisher) internal isValidBzzHash(bzzHash) {
         _publisherOf[bzzHash] = publisher;
     }
 
-    function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal {
-        require(bzzHash != bytes32(0), "Invalide hash");
+    function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal isValidBzzHash(bzzHash) {
         require(bytes(metadataUri).length > 0, "Invalide length");
 
         _metadataOf[bzzHash] = metadataUri;
