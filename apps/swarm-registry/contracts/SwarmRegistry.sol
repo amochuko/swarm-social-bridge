@@ -25,12 +25,12 @@ contract SwarmRegistry is IRegistry {
     mapping(bytes32 => string) private _metadataOf;
 
     modifier isRegistered(bytes32 bzzHash) {
-        require(_publisherOf[bzzHash] == address(0), "Already registered");
+        require(getPublisher(bzzHash) == address(0), "Already registered");
         _;
     }
 
     modifier isPublisher(bytes32 bzzHash) {
-        require(_publisherOf[bzzHash] == msg.sender, "Not publisher");
+        require(getPublisher(bzzHash) == msg.sender, "Not publisher");
         _;
     }
 
@@ -52,13 +52,13 @@ contract SwarmRegistry is IRegistry {
 
     /// @notice Get metadata
     /// @param bzzHash The reference hash
-    function getMetadata(bytes32 bzzHash) external view returns (string memory) {
+    function getMetadata(bytes32 bzzHash) public view returns (string memory) {
         return _metadataOf[bzzHash];
     }
 
     /// @notice Get publisher of a manifest
     /// @param bzzHash The reference hash
-    function getPublisher(bytes32 bzzHash) external view returns (address) {
+    function getPublisher(bytes32 bzzHash) public view returns (address) {
         return _publisherOf[bzzHash];
     }
 
