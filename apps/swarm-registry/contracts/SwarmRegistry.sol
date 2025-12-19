@@ -21,4 +21,8 @@ contract SwarmRegistry is IRegistry {
 
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
+
+    function getMetadata(bytes32 bzzHash) external view returns(string memory) {
+        return metadataOf[bzzHash];
+    }
 }
