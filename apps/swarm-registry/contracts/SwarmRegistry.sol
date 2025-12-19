@@ -43,6 +43,7 @@ contract SwarmRegistry is IRegistry {
     error InvalidHash();
     error AlreadyRegistered();
     error NotPublished();
+    error NotPublisher();
     error SignatureExpired();
     error InvalidSignature();
 
@@ -56,7 +57,7 @@ contract SwarmRegistry is IRegistry {
     }
 
     modifier isPublisher(bytes32 bzzHash) {
-        require(getPublisher(bzzHash) == msg.sender, "Not publisher");
+        if (getPublisher(bzzHash) != msg.sender) revert NotPublisher();
         _;
     }
 
