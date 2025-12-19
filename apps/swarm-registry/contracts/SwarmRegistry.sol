@@ -24,6 +24,9 @@ contract SwarmRegistry is IRegistry {
     /// Swarm manifest hash => metadata URI
     mapping(bytes32 => string) private _metadataOf;
 
+    /// @notice Nonce per signer for replay protection
+    mapping(address => uint256) public nonces;
+
     /*////////////////////////////////////////////////////////
                         EIP-712 CONSTANT
     ////////////////////////////////////////////////////////*/
@@ -92,16 +95,16 @@ contract SwarmRegistry is IRegistry {
         _metadataOf[bzzHash] = metadataUri;
     }
 
-/**
- * Recover signer address
- * @param bzzHash the reference hash
- * @param metadataUri the metadata URI pointed to
- * @param nonce the tx count
- * @param deadline the signature expiry timestamp (unix)
- * @param v recovery id (27 or 28)
- * @param r first 32 bytes of the ECDSA signature
- * @param s second 32 bytes of the ECDSA signature
- */
+    /**
+     * Recover signer address
+     * @param bzzHash the reference hash
+     * @param metadataUri the metadata URI pointed to
+     * @param nonce the tx count
+     * @param deadline the signature expiry timestamp (unix)
+     * @param v recovery id (27 or 28)
+     * @param r first 32 bytes of the ECDSA signature
+     * @param s second 32 bytes of the ECDSA signature
+     */
     function _recoverSigner(
         bytes32 bzzHash,
         string calldata metadataUri,
