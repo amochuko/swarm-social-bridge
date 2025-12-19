@@ -23,7 +23,7 @@ contract SwarmRegistry is IRegistry {
     mapping(bytes32 => string) private _metadataOf;
 
     /// @notice Nonce per signer for replay protection
-    mapping(address => uint256) public nonces;
+    mapping(address => uint256) private _nonces;
 
     /*////////////////////////////////////////////////////////
                         EIP-712 CONSTANT
@@ -154,12 +154,12 @@ contract SwarmRegistry is IRegistry {
 
         if (signer == address(0)) revert InvalidAddress();
 
-        uint256 nonce = nonces[signer];
+        uint256 nonce = _nonces[signer];
         address recovered_signer = _recoverSigner(signer, bzzHash, metadataUri, nonce, deadline, v, r, s);
 
         if (recovered_signer != signer) revert InvalidSignature();
 
-        nonces[recovered_signer]++;
+        _nonces[recovered_signer]++;
 
         _setPublisher(bzzHash, signer);
         _setMetadata(bzzHash, metadataUri);
@@ -183,5 +183,9 @@ contract SwarmRegistry is IRegistry {
     /// @param bzzHash The reference hash
     function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external isPublisher(bzzHash) {
         // _setPublisher(bzzHash, metadataUri);
+    }
+
+    function getNonce(address signer) external view returns(uint256) {
+        return _nonces[signer];
     }
 }
