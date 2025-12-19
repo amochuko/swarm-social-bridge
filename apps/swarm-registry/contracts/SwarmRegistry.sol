@@ -25,4 +25,8 @@ contract SwarmRegistry is IRegistry {
     function getMetadata(bytes32 bzzHash) external view returns(string memory) {
         return metadataOf[bzzHash];
     }
+
+    function getPublisher(bytes32 bzzHash) external view returns(address) {
+        return publisherOf[bzzHash];
+    }
 }
