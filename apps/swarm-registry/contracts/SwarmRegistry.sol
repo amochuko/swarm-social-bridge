@@ -28,13 +28,23 @@ contract SwarmRegistry is IRegistry {
                         EIP-712 CONSTANT
     ////////////////////////////////////////////////////////*/
 
-    bytes32 private constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint26 chainId,address verifyingContract)");
+    bytes32 private constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint26 chainId,address verifyingContract)");
 
-    bytes32 private constant PUBLISH_TYPEHASH = keccak256("Publish(bytes32 bzzHash,string metadataUri,uint356 nonce,uint256 deadline)");
+    bytes32 private constant PUBLISH_TYPEHASH =
+        keccak256("Publish(bytes32 bzzHash,string metadataUri,uint356 nonce,uint256 deadline)");
 
     bytes32 private immutable DOMAIN_SEPARATOR;
 
-    
+    /*//////////////////////////////////////////////////////////////
+                            ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error InvalidHash();
+    error AlreadyRegistered();
+    error NotPublished();
+    error SignatureExpired();
+    error InvalidSignature();
 
     /*///////////////////////////////////
                 MODIFIERS
@@ -53,6 +63,17 @@ contract SwarmRegistry is IRegistry {
     modifier isValidBzzHash(bytes32 bzzHash) {
         require(bzzHash != bytes32(0), "Invalid hash");
         _;
+    }
+
+    /*/////////////////////////////////////////////////////
+                    CONSTRUCTOR
+    /////////////////////////////////////////////////////*/
+    constructor() {
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encodePacked(
+                DOMAIN_TYPEHASH, keccak256(bytes("SwarmRegistry")), keccak256(bytes("1")), block.chainid, address(this)
+            )
+        );
     }
 
     /*//////////////////////////////////
