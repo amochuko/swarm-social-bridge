@@ -24,6 +24,18 @@ contract SwarmRegistry is IRegistry {
     /// Swarm manifest hash => metadata URI
     mapping(bytes32 => string) private _metadataOf;
 
+    /*////////////////////////////////////////////////////////
+                        EIP-712 CONSTANT
+    ////////////////////////////////////////////////////////*/
+
+    bytes32 private constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint26 chainId,address verifyingContract)");
+
+    bytes32 private constant PUBLISH_TYPEHASH = keccak256("Publish(bytes32 bzzHash,string metadataUri,uint356 nonce,uint256 deadline)");
+
+    bytes32 private immutable DOMAIN_SEPARATOR;
+
+    
+
     /*///////////////////////////////////
                 MODIFIERS
     //////////////////////////////////*/
