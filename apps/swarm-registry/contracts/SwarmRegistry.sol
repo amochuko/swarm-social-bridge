@@ -51,7 +51,7 @@ contract SwarmRegistry is IRegistry {
     //////////////////////////////////*/
 
     modifier isRegistered(bytes32 bzzHash) {
-        require(getPublisher(bzzHash) == address(0), "Already registered");
+        if (getPublisher(bzzHash) != address(0)) revert AlreadyRegistered();
         _;
     }
 
@@ -61,7 +61,7 @@ contract SwarmRegistry is IRegistry {
     }
 
     modifier isValidBzzHash(bytes32 bzzHash) {
-        require(bzzHash != bytes32(0), "Invalid hash");
+        if (bzzHash == bytes32(0)) revert InvalidHash();
         _;
     }
 
