@@ -11,7 +11,7 @@ contract SwarmRegistry is IRegistry {
             EVENTS
     //////////////////*/
     event ManifestPublished(
-        address indexed publisher, bytes32 indexed bzzHashed, string metadataUri, uint256 timestamp
+        address indexed publisher, bytes32 indexed bzzHash, string metadataUri, uint256 timestamp
     );
 
     /*///////////////////////////
