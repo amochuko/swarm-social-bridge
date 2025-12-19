@@ -47,6 +47,7 @@ contract SwarmRegistry is IRegistry {
     error NotPublisher();
     error SignatureExpired();
     error InvalidSignature();
+    error InvalidAddress();
     error InvalidLength();
 
     /*///////////////////////////////////
@@ -104,6 +105,7 @@ contract SwarmRegistry is IRegistry {
      * @param s second 32 bytes of the ECDSA signature
      */
     function _recoverSigner(
+        address signer,
         bytes32 bzzHash,
         string calldata metadataUri,
         uint256 nonce,
@@ -112,8 +114,9 @@ contract SwarmRegistry is IRegistry {
         bytes32 r,
         bytes32 s
     ) internal view returns (address) {
-        bytes32 structHash =
-            keccak256(abi.encode(PUBLISH_TYPEHASH, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline));
+        bytes32 structHash = keccak256(
+            abi.encode(PUBLISH_TYPEHASH, signer, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline)
+        );
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
 
@@ -139,6 +142,7 @@ contract SwarmRegistry is IRegistry {
     /////////////////////////////////////////////////////////*/
 
     function publishWithSig(
+        address signer,
         bytes32 bzzHash,
         string calldata metadataUri,
         uint256 deadline,
@@ -148,11 +152,14 @@ contract SwarmRegistry is IRegistry {
     ) external isValidBzzHash(bzzHash) isRegistered(bzzHash) {
         if (block.timestamp > deadline) revert SignatureExpired();
 
-        address signer = _recoverSigner(bzzHash, metadataUri, nonces[msg.sender], deadline, v, r, s);
+        if (signer == address(0)) revert InvalidAddress();
 
-        if (signer == address(0)) revert InvalidSignature();
+        uint256 nonce = nonces[signer];
+        address recovered_signer = _recoverSigner(signer, bzzHash, metadataUri, nonce, deadline, v, r, s);
 
-        nonces[signer]++;
+        if (recovered_signer != signer) revert InvalidSignature();
+
+        nonces[recovered_signer]++;
 
         _setPublisher(bzzHash, signer);
         _setMetadata(bzzHash, metadataUri);
