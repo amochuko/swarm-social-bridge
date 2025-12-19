@@ -24,6 +24,10 @@ contract SwarmRegistry is IRegistry {
     /// Swarm manifest hash => metadata URI
     mapping(bytes32 => string) private _metadataOf;
 
+    /*///////////////////////////////////
+                MODIFIERS
+    //////////////////////////////////*/
+
     modifier isRegistered(bytes32 bzzHash) {
         require(getPublisher(bzzHash) == address(0), "Already registered");
         _;
