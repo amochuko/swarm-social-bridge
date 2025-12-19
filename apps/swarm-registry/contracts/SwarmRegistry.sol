@@ -18,6 +18,11 @@ contract SwarmRegistry is IRegistry {
         _;
     }
 
+    modifier isPublisher(bytes32 bzzHash) {
+        require(publisherOf[bzzHash] == msg.sender, "Not publisher");
+        _;
+    }
+
     function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
         require(bzzHash != bytes32(0), "Invalide hash");
 
