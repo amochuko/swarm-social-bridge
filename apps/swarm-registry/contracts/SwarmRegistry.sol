@@ -10,9 +10,7 @@ contract SwarmRegistry is IRegistry {
     /*//////////////////
             EVENTS
     //////////////////*/
-    event ManifestPublished(
-        address indexed publisher, bytes32 indexed bzzHash, string metadataUri, uint256 timestamp
-    );
+    event ManifestPublished(address indexed publisher, bytes32 indexed bzzHash, string metadataUri, uint256 timestamp);
 
     /*///////////////////////////
             STORAGE
@@ -32,10 +30,10 @@ contract SwarmRegistry is IRegistry {
     ////////////////////////////////////////////////////////*/
 
     bytes32 private constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,string version,uint26 chainId,address verifyingContract)");
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     bytes32 private constant PUBLISH_TYPEHASH =
-        keccak256("Publish(bytes32 bzzHash,string metadataUri,uint356 nonce,uint256 deadline)");
+        keccak256("Publish(bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)");
 
     bytes32 private immutable DOMAIN_SEPARATOR;
 
@@ -75,7 +73,7 @@ contract SwarmRegistry is IRegistry {
     /////////////////////////////////////////////////////*/
     constructor() {
         DOMAIN_SEPARATOR = keccak256(
-            abi.encodePacked(
+            abi.encode(
                 DOMAIN_TYPEHASH, keccak256(bytes("SwarmRegistry")), keccak256(bytes("1")), block.chainid, address(this)
             )
         );
@@ -90,7 +88,7 @@ contract SwarmRegistry is IRegistry {
     }
 
     function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal isValidBzzHash(bzzHash) {
-        if (bytes(metadataUri).length < 0) revert InvalidLength();
+        if (bytes(metadataUri).length > 0) revert InvalidLength();
 
         _metadataOf[bzzHash] = metadataUri;
     }
