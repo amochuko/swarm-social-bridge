@@ -46,6 +46,7 @@ contract SwarmRegistry is IRegistry {
     error NotPublisher();
     error SignatureExpired();
     error InvalidSignature();
+    error InvalidLength();
 
     /*///////////////////////////////////
                 MODIFIERS
@@ -86,7 +87,7 @@ contract SwarmRegistry is IRegistry {
     }
 
     function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal isValidBzzHash(bzzHash) {
-        require(bytes(metadataUri).length > 0, "Invalid length");
+        if (bytes(metadataUri).length < 0) revert InvalidLength();
 
         _metadataOf[bzzHash] = metadataUri;
     }
