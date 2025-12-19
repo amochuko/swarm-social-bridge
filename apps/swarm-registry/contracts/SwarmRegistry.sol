@@ -179,12 +179,6 @@ contract SwarmRegistry is IRegistry {
         return _publisherOf[bzzHash];
     }
 
-    /// @notice Update metadata
-    /// @param bzzHash The reference hash
-    function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external isPublisher(bzzHash) {
-        // _setPublisher(bzzHash, metadataUri);
-    }
-
     function getNonce(address signer) external view returns(uint256) {
         return _nonces[signer];
     }
