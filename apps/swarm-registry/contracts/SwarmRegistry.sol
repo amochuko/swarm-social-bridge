@@ -34,6 +34,23 @@ contract SwarmRegistry is IRegistry {
         _;
     }
 
+    /*//////////////////////////////////
+            INTERNAL
+    /////////////////////////////*/
+
+    function _setPublisher(bytes32 bzzHash, address publisher) internal {
+        require(bzzHash != bytes32(0), "Invalide hash");
+
+        _publisherOf[bzzHash] = publisher;
+    }
+
+    function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal {
+        require(bzzHash != bytes32(0), "Invalide hash");
+        require(bytes(metadataUri).length > 0, "Invalide length");
+
+        _metadataOf[bzzHash] = metadataUri;
+    }
+
     /*////////////////////////////////
                     DIRECT PUBLIC
     ///////////////////////////////*/
@@ -42,10 +59,8 @@ contract SwarmRegistry is IRegistry {
     /// @param bzzHash the reference hash from uploaded data via Swarm
     /// @param metadataUri metadataURI as refrenced by bzzHash
     function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
-        require(bzzHash != bytes32(0), "Invalide hash");
-
-        _publisherOf[bzzHash] = msg.sender;
-        _metadataOf[bzzHash] = metadataUri;
+        _setPublisher(bzzHash, msg.sender);
+        _setMetadata(bzzHash, metadataUri);
 
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
@@ -65,6 +80,6 @@ contract SwarmRegistry is IRegistry {
     /// @notice Update metadata
     /// @param bzzHash The reference hash
     function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external isPublisher(bzzHash) {
-        _metadataOf[bzzHash] = metadataUri;
+        // _setPublisher(bzzHash, metadataUri);
     }
 }
