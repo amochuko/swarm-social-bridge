@@ -19,18 +19,18 @@ contract SwarmRegistry is IRegistry {
     //////////////////////////*/
 
     // @notice Swarm manifest hash => original publisher
-    mapping(bytes32 => address) public publisherOf;
+    mapping(bytes32 => address) private _publisherOf;
 
     /// Swarm manifest hash => metadata URI
-    mapping(bytes32 => string) public metadataOf;
+    mapping(bytes32 => string) private _metadataOf;
 
     modifier isRegistered(bytes32 bzzHash) {
-        require(publisherOf[bzzHash] == address(0), "Already registered");
+        require(_publisherOf[bzzHash] == address(0), "Already registered");
         _;
     }
 
     modifier isPublisher(bytes32 bzzHash) {
-        require(publisherOf[bzzHash] == msg.sender, "Not publisher");
+        require(_publisherOf[bzzHash] == msg.sender, "Not publisher");
         _;
     }
 
@@ -44,8 +44,8 @@ contract SwarmRegistry is IRegistry {
     function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
         require(bzzHash != bytes32(0), "Invalide hash");
 
-        publisherOf[bzzHash] = msg.sender;
-        metadataOf[bzzHash] = metadataUri;
+        _publisherOf[bzzHash] = msg.sender;
+        _metadataOf[bzzHash] = metadataUri;
 
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
@@ -53,18 +53,18 @@ contract SwarmRegistry is IRegistry {
     /// @notice Get metadata
     /// @param bzzHash The reference hash
     function getMetadata(bytes32 bzzHash) external view returns (string memory) {
-        return metadataOf[bzzHash];
+        return _metadataOf[bzzHash];
     }
 
     /// @notice Get publisher of a manifest
     /// @param bzzHash The reference hash
     function getPublisher(bytes32 bzzHash) external view returns (address) {
-        return publisherOf[bzzHash];
+        return _publisherOf[bzzHash];
     }
 
     /// @notice Update metadata
     /// @param bzzHash The reference hash
     function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external isPublisher(bzzHash) {
-        metadataOf[bzzHash] = metadataUri;
+        _metadataOf[bzzHash] = metadataUri;
     }
 }
