@@ -13,7 +13,7 @@ contract SwarmRegistry is IRegistry {
     mapping(bytes32 => address) public publisherOf;
     mapping(bytes32 => string) public metadataOf;
 
-    function publishMenifest(bytes32 bzzHash, string calldata metadataUri) external {
+    function publishManifest(bytes32 bzzHash, string calldata metadataUri) external {
         require(bzzHash != bytes32(0), "Invalide hash");
 
         publisherOf[bzzHash] = msg.sender;
