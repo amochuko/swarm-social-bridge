@@ -13,7 +13,12 @@ contract SwarmRegistry is IRegistry {
     mapping(bytes32 => address) public publisherOf;
     mapping(bytes32 => string) public metadataOf;
 
-    function publishManifest(bytes32 bzzHash, string calldata metadataUri) external {
+    modifier isRegistered(bytes32 bzzHash) {
+        require(publisherOf[bzzHash] == address(0), "Already registered");
+        _;
+    }
+
+    function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
         require(bzzHash != bytes32(0), "Invalide hash");
 
         publisherOf[bzzHash] = msg.sender;
@@ -22,11 +27,11 @@ contract SwarmRegistry is IRegistry {
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
 
-    function getMetadata(bytes32 bzzHash) external view returns(string memory) {
+    function getMetadata(bytes32 bzzHash) external view returns (string memory) {
         return metadataOf[bzzHash];
     }
 
-    function getPublisher(bytes32 bzzHash) external view returns(address) {
+    function getPublisher(bytes32 bzzHash) external view returns (address) {
         return publisherOf[bzzHash];
     }
 }
