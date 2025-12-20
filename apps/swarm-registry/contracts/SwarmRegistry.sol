@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IRegistry} from "./interface/IRegistry.sol";
+import {console2} from "forge-std/Test.sol";
 
 /// @title SwarmRegistry
 /// @notice Minimal registry to publish Swarm BZZ manifest hashes and metadata references on-chain. it
 /// supports both direct publishing and signature-based relay publishing.
-contract SwarmRegistry is IRegistry {
+contract SwarmRegistry is IRegistry, EIP712 {
+    using ECDSA for bytes;
+
     /*//////////////////
             EVENTS
     //////////////////*/
@@ -29,13 +34,10 @@ contract SwarmRegistry is IRegistry {
                         EIP-712 CONSTANT
     ////////////////////////////////////////////////////////*/
 
-    bytes32 private constant DOMAIN_TYPEHASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-
     bytes32 private constant PUBLISH_TYPEHASH =
-        keccak256("Publish(bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)");
-
-    bytes32 private immutable DOMAIN_SEPARATOR;
+        keccak256(
+            "Publish(address signer,bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)"
+        );
 
     /*//////////////////////////////////////////////////////////////
                             ERRORS
@@ -72,13 +74,7 @@ contract SwarmRegistry is IRegistry {
     /*/////////////////////////////////////////////////////
                     CONSTRUCTOR
     /////////////////////////////////////////////////////*/
-    constructor() {
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                DOMAIN_TYPEHASH, keccak256(bytes("SwarmRegistry")), keccak256(bytes("1")), block.chainid, address(this)
-            )
-        );
-    }
+    constructor() EIP712("SwarmRegistry", "1") {}
 
     /*//////////////////////////////////
             INTERNAL
@@ -92,35 +88,6 @@ contract SwarmRegistry is IRegistry {
         if (bytes(metadataUri).length == 0) revert InvalidLength();
 
         _metadataOf[bzzHash] = metadataUri;
-    }
-
-    /**
-     * Recover signer address
-     * @param bzzHash the reference hash
-     * @param metadataUri the metadata URI pointed to
-     * @param nonce the tx count
-     * @param deadline the signature expiry timestamp (unix)
-     * @param v recovery id (27 or 28)
-     * @param r first 32 bytes of the ECDSA signature
-     * @param s second 32 bytes of the ECDSA signature
-     */
-    function _recoverSigner(
-        address signer,
-        bytes32 bzzHash,
-        string calldata metadataUri,
-        uint256 nonce,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) internal view returns (address) {
-        bytes32 structHash = keccak256(
-            abi.encode(PUBLISH_TYPEHASH, signer, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline)
-        );
-
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
-
-        return ecrecover(digest, v, r, s);
     }
 
     /*////////////////////////////////
@@ -155,11 +122,15 @@ contract SwarmRegistry is IRegistry {
         if (signer == address(0)) revert InvalidAddress();
 
         uint256 nonce = _nonces[signer];
-        address recovered_signer = _recoverSigner(signer, bzzHash, metadataUri, nonce, deadline, v, r, s);
+        bytes32 structHash =
+            keccak256(abi.encode(PUBLISH_TYPEHASH, signer, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline));
 
-        if (recovered_signer != signer) revert InvalidSignature();
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address recovered = ECDSA.recover(digest, v, r, s);
 
-        _nonces[recovered_signer]++;
+        if (recovered != signer) revert InvalidSignature();
+
+        _nonces[signer]++;
 
         _setPublisher(bzzHash, signer);
         _setMetadata(bzzHash, metadataUri);
@@ -179,7 +150,7 @@ contract SwarmRegistry is IRegistry {
         return _publisherOf[bzzHash];
     }
 
-    function getNonce(address signer) external view returns(uint256) {
+    function getNonce(address signer) external view returns (uint256) {
         return _nonces[signer];
     }
 }
