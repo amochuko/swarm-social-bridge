@@ -15,4 +15,13 @@ interface IRegistry {
         bytes32 s
     ) external;
     function getNonce(address signer) external view returns (uint256);
+    function publishBatchWithSig(
+        address signer,
+        bytes32[] calldata bzzHashes,
+        string[] calldata metadataUris,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }
