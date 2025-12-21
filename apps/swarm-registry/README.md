@@ -40,3 +40,5 @@ Swarm remains the data layer.
 # Gas Analysis
 On Polygon, batch publishing reduces per-manifest gas costs by ~60–70% 
 as demostrated in the test './test/SwarmRegistry.gas-analysis.test.ts' compared to single publishes. This enables relayer-sponsored anchoring of Swarm manifests for high-throughput applications such as social feeds, content indexing, and data availability commitments—use cases that are cost-prohibitive on Ethereum mainnet.
+
+
