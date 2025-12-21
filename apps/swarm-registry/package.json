@@ -8,6 +8,8 @@
     "test:solidity": "pnpm hardhat test solidity --coverage --gas-stats",
     "test": "pnpm hardhat test",
     "test:coverage:gas-stats": "pnpm hardhat test --coverage --gas-stats",
+    "deploy:polygon:amoy": "pnpm hardhat ignition deploy ignition/modules/SwarmRegistry.ts --network polygonAmoy --verify",
+    "deploy:polygon:mainnet": "pnpm hardhat ignition deploy ignition/modules/SwarmRegistry.ts --network polygonMainnet --verify",
     "clean": "pnpm hardhat clean"
   },
   "devDependencies": {
