@@ -1,14 +1,18 @@
-export interface PublishBatchParams {
-    signer: string;
-    bzzHashes: string[];
-    metadataUris: string[];
-    nonce: bigint;
-    deadline: bigint;
-}
+import { Provider, Signer } from "ethers";
 
 export interface BatchSignature {
-    v:string;
-    r:string;
-    s:string;
+  v: string;
+  r: string;
+  s: string;
+}
+
+export type PublishItem = {
+  bzzHash: string;
+  metadataUri: string;
+};
+export interface PublishBatchParams {
+  nonce: bigint;
+  items: PublishItem[];
+  deadline?: bigint;
 }
 
