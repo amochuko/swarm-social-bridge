@@ -2,6 +2,7 @@ import { ethers, TypedDataDomain, TypedDataField } from "ethers";
 import { SWARM_REGISTRY_ABI } from "./abi";
 import { hashBzzHashes, hashMetadataUris } from "./helpers";
 import { PublishBatchParams, RegistryClientConfig } from "./types";
+import { get } from "http";
 
 // EIP-712 Types (must match those defined in the smart contract)
 const TYPES: Record<string, TypedDataField[]> = {
@@ -64,9 +65,17 @@ export function createRegistryClient(config: RegistryClientConfig) {
     );
   }
 
-  async function getPublisher(bzzHash:string) {
+  async function getPublisher(bzzHash: string) {
     return contract.getPublisher(bzzHash);
   }
 
-  
+  async function getMetadata(bzzHash: string) {
+    return contract.getMetadata(bzzHash);
+  }
+
+  return {
+    publishBatch,
+    getPublisher,
+    getMetadata,
+  }
 }
