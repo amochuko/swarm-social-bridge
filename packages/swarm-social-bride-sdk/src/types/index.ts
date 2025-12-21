@@ -24,3 +24,6 @@ export type RegistryClientConfig = {
 };
 
 
+export type SwarmClientConfig = {
+  beeNodeUrl: string;
+};
