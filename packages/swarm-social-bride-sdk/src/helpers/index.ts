@@ -10,3 +10,16 @@ export function hashBzzHashes(bzzHashes: string[]) {
 
   return bzzHashesHash;
 }
+
+
+export function hashMetadataUris(metadataUris: string[]) {
+  // Pre-hash arrays before signing
+  const metadataUrisHash = ethers.keccak256(
+    abi.encode(
+      ["bytes32[]"],
+      [metadataUris.map((uri) => ethers.keccak256(ethers.toUtf8Bytes(uri)))]
+    )
+  );
+
+  return metadataUrisHash;
+}
