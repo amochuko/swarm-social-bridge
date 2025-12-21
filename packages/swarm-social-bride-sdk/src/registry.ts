@@ -63,4 +63,10 @@ export function createRegistryClient(config: RegistryClientConfig) {
       s
     );
   }
+
+  async function getPublisher(bzzHash:string) {
+    return contract.getPublisher(bzzHash);
+  }
+
+  
 }
