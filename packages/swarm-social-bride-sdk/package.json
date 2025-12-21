@@ -24,6 +24,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@ethersphere/bee-js": "^9.8.1",
     "ethers": "^6.15.0"
   }
 }

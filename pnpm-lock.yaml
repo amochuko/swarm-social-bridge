@@ -200,6 +200,9 @@ importers:
 
   packages/swarm-social-bride-sdk:
     dependencies:
+      '@ethersphere/bee-js':
+        specifier: ^9.8.1
+        version: 9.8.1
       ethers:
         specifier: ^6.15.0
         version: 6.15.0
