@@ -1,7 +1,7 @@
 {
-  "name": "@swarm-social-bride/sdk",
+  "name": "@swarm-registry/registry-sdk",
   "version": "0.0.1",
-  "description": "",
+  "description": "Polygon ↔ Swarm registry SDK with batch publishing and gas abstraction",
   "main": "src/index.ts",
   "exports": {
     ".": {
