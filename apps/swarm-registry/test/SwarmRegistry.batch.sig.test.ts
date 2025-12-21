@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import hre from "hardhat";
+import { makeDomain, types } from "./helpers.js";
 
 const { ethers, networkHelpers } = await hre.network.connect();
 const abi = ethers.AbiCoder.defaultAbiCoder();
@@ -11,30 +12,11 @@ describe("SwarmRegistry:Batch", () => {
     const swarmRegistry = await ethers.deployContract("SwarmRegistry");
     const network = await ethers.provider.getNetwork();
 
-    const types = {
-      PublishBatch: [
-        { name: "signer", type: "address" },
-        { name: "bzzHashesHash", type: "bytes32" },
-        { name: "metadataUrisHash", type: "bytes32" },
-        { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ],
-    };
-
-    return { swarmRegistry, signer, deployer, relayer, network, types };
-  }
-
-  function makeDomain(chainId: bigint, verifyingContract: string) {
-    return {
-      name: "SwarmRegistry",
-      version: "1",
-      chainId,
-      verifyingContract,
-    };
+    return { swarmRegistry, signer, deployer, relayer, network };
   }
 
   it("publishes a batch via relayer with a vaild signature", async () => {
-    const { signer, swarmRegistry, relayer, network, types } =
+    const { signer, swarmRegistry, relayer, network } =
       await networkHelpers.loadFixture(deploySwarmRegistryFixture);
 
     const chainId = network.chainId;
