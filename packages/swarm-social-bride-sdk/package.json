@@ -1,0 +1,26 @@
+{
+  "name": "@swarm-social-bride/sdk",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest",
+    "clean": "rm -rf ./dist",
+    "build": "npm run clean && tsc -p .",
+    "dev": "tsc --watch",
+    "start": "npm run build && node ./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "typescript": "^5.9.2"
+  }
+}
