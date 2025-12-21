@@ -16,3 +16,11 @@ export interface PublishBatchParams {
   deadline?: bigint;
 }
 
+export type RegistryClientConfig = {
+  contractAddress: string;
+  chainId: bigint;
+  provider: Provider;
+  signer?: Signer;
+};
+
+
