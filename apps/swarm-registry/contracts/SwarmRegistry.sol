@@ -4,7 +4,6 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IRegistry} from "./interface/IRegistry.sol";
-import {console2} from "forge-std/Test.sol";
 
 /// @title SwarmRegistry
 /// @notice Minimal registry to publish Swarm BZZ manifest hashes and metadata references on-chain. it
@@ -35,9 +34,11 @@ contract SwarmRegistry is IRegistry, EIP712 {
     ////////////////////////////////////////////////////////*/
 
     bytes32 private constant PUBLISH_TYPEHASH =
-        keccak256(
-            "Publish(address signer,bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)"
-        );
+        keccak256("Publish(address signer,bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)");
+
+    bytes32 private constant PUBLISH_BATCH_TYPEHASH = keccak256(
+         "PublishBatch(address signer,bytes32 bzzHashesHash,bytes32 metadataUrisHash,uint256 nonce,uint256 deadline)"
+    );
 
     /*//////////////////////////////////////////////////////////////
                             ERRORS
@@ -51,6 +52,7 @@ contract SwarmRegistry is IRegistry, EIP712 {
     error InvalidSignature();
     error InvalidAddress();
     error InvalidLength();
+    error InvalidBatch();
 
     /*///////////////////////////////////
                 MODIFIERS
@@ -88,6 +90,71 @@ contract SwarmRegistry is IRegistry, EIP712 {
         if (bytes(metadataUri).length == 0) revert InvalidLength();
 
         _metadataOf[bzzHash] = metadataUri;
+    }
+
+    function _hashBzzHashes(bytes32[] calldata bzzHashes) internal pure returns (bytes32) {
+        return keccak256(abi.encode(bzzHashes));
+    }
+
+    function _hashMetadataUris(string[] calldata metadataUris) internal pure returns (bytes32) {
+        bytes32[] memory hashes = new bytes32[](metadataUris.length);
+
+        for (uint256 i = 0; i < metadataUris.length; i++) {
+            hashes[i] = keccak256(bytes(metadataUris[i]));
+        }
+        return keccak256(abi.encode(hashes));
+    }
+
+    function _validateBatchSignature(
+        address signer,
+        bytes32[] calldata bzzHashes,
+        string[] calldata metadataUris,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal returns (uint256 nonce) {
+        if (block.timestamp > deadline) revert SignatureExpired();
+        if (signer == address(0)) revert InvalidAddress();
+
+        if (bzzHashes.length == 0 || bzzHashes.length != metadataUris.length) {
+            revert InvalidBatch();
+        }
+
+        nonce = _nonces[signer];
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                PUBLISH_BATCH_TYPEHASH,
+                signer,
+                _hashBzzHashes(bzzHashes),
+                _hashMetadataUris(metadataUris),
+                nonce,
+                deadline
+            )
+        );
+
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address recovered = ECDSA.recover(digest, v, r, s);
+
+        if (recovered != signer) revert InvalidSignature();
+
+        _nonces[signer] = nonce + bzzHashes.length;
+    }
+
+    function _applyBatch(address signer, bytes32[] calldata bzzHashes, string[] calldata metadataUris) internal {
+        for (uint256 i = 0; i < bzzHashes.length; i++) {
+            bytes32 bzzHash = bzzHashes[i];
+
+            if (bzzHash == bytes32(0) || _publisherOf[bzzHash] != address(0)) {
+                revert AlreadyRegistered();
+            }
+
+            _publisherOf[bzzHash] = signer;
+            _metadataOf[bzzHash] = metadataUris[i];
+
+            emit ManifestPublished(signer, bzzHash, metadataUris[i], block.timestamp);
+        }
     }
 
     /*////////////////////////////////
@@ -136,6 +203,20 @@ contract SwarmRegistry is IRegistry, EIP712 {
         _setMetadata(bzzHash, metadataUri);
 
         emit ManifestPublished(signer, bzzHash, metadataUri, block.timestamp);
+    }
+
+    function publishBatchWithSig(
+        address signer,
+        bytes32[] calldata bzzHashes,
+        string[] calldata metadataUris,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        _validateBatchSignature(signer, bzzHashes, metadataUris, deadline, v, r, s);
+
+        _applyBatch(signer, bzzHashes, metadataUris);
     }
 
     /// @notice Get metadata
