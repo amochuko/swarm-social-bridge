@@ -1,46 +1,237 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.18;
 
+import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IRegistry} from "./interface/IRegistry.sol";
 
 /// @title SwarmRegistry
-/// @notice Minimal registry to publish Swarm BZZ manifest hashes and metadata references on-chain.
-contract SwarmRegistry is IRegistry {
-    event ManifestPublished(
-        address indexed publisher, bytes32 indexed bzzHashed, string metadataUri, uint256 timestamp
+/// @notice Minimal registry to publish Swarm BZZ manifest hashes and metadata references on-chain. it
+/// supports both direct publishing and signature-based relay publishing.
+contract SwarmRegistry is IRegistry, EIP712 {
+    using ECDSA for bytes;
+
+    /*//////////////////
+            EVENTS
+    //////////////////*/
+    event ManifestPublished(address indexed publisher, bytes32 indexed bzzHash, string metadataUri, uint256 timestamp);
+
+    /*///////////////////////////
+            STORAGE
+    //////////////////////////*/
+
+    // @notice Swarm manifest hash => original publisher
+    mapping(bytes32 => address) private _publisherOf;
+
+    /// Swarm manifest hash => metadata URI
+    mapping(bytes32 => string) private _metadataOf;
+
+    /// @notice Nonce per signer for replay protection
+    mapping(address => uint256) private _nonces;
+
+    /*////////////////////////////////////////////////////////
+                        EIP-712 CONSTANT
+    ////////////////////////////////////////////////////////*/
+
+    bytes32 private constant PUBLISH_TYPEHASH =
+        keccak256("Publish(address signer,bytes32 bzzHash,string metadataUri,uint256 nonce,uint256 deadline)");
+
+    bytes32 private constant PUBLISH_BATCH_TYPEHASH = keccak256(
+         "PublishBatch(address signer,bytes32 bzzHashesHash,bytes32 metadataUrisHash,uint256 nonce,uint256 deadline)"
     );
 
-    mapping(bytes32 => address) public publisherOf;
-    mapping(bytes32 => string) public metadataOf;
+    /*//////////////////////////////////////////////////////////////
+                            ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error InvalidHash();
+    error AlreadyRegistered();
+    error NotPublished();
+    error NotPublisher();
+    error SignatureExpired();
+    error InvalidSignature();
+    error InvalidAddress();
+    error InvalidLength();
+    error InvalidBatch();
+
+    /*///////////////////////////////////
+                MODIFIERS
+    //////////////////////////////////*/
 
     modifier isRegistered(bytes32 bzzHash) {
-        require(publisherOf[bzzHash] == address(0), "Already registered");
+        if (getPublisher(bzzHash) != address(0)) revert AlreadyRegistered();
         _;
     }
 
     modifier isPublisher(bytes32 bzzHash) {
-        require(publisherOf[bzzHash] == msg.sender, "Not publisher");
+        if (getPublisher(bzzHash) != msg.sender) revert NotPublisher();
         _;
     }
 
-    function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
-        require(bzzHash != bytes32(0), "Invalide hash");
+    modifier isValidBzzHash(bytes32 bzzHash) {
+        if (bzzHash == bytes32(0)) revert InvalidHash();
+        _;
+    }
 
-        publisherOf[bzzHash] = msg.sender;
-        metadataOf[bzzHash] = metadataUri;
+    /*/////////////////////////////////////////////////////
+                    CONSTRUCTOR
+    /////////////////////////////////////////////////////*/
+    constructor() EIP712("SwarmRegistry", "1") {}
+
+    /*//////////////////////////////////
+            INTERNAL
+    /////////////////////////////*/
+
+    function _setPublisher(bytes32 bzzHash, address publisher) internal isValidBzzHash(bzzHash) {
+        _publisherOf[bzzHash] = publisher;
+    }
+
+    function _setMetadata(bytes32 bzzHash, string calldata metadataUri) internal isValidBzzHash(bzzHash) {
+        if (bytes(metadataUri).length == 0) revert InvalidLength();
+
+        _metadataOf[bzzHash] = metadataUri;
+    }
+
+    function _hashBzzHashes(bytes32[] calldata bzzHashes) internal pure returns (bytes32) {
+        return keccak256(abi.encode(bzzHashes));
+    }
+
+    function _hashMetadataUris(string[] calldata metadataUris) internal pure returns (bytes32) {
+        bytes32[] memory hashes = new bytes32[](metadataUris.length);
+
+        for (uint256 i = 0; i < metadataUris.length; i++) {
+            hashes[i] = keccak256(bytes(metadataUris[i]));
+        }
+        return keccak256(abi.encode(hashes));
+    }
+
+    function _validateBatchSignature(
+        address signer,
+        bytes32[] calldata bzzHashes,
+        string[] calldata metadataUris,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal returns (uint256 nonce) {
+        if (block.timestamp > deadline) revert SignatureExpired();
+        if (signer == address(0)) revert InvalidAddress();
+
+        if (bzzHashes.length == 0 || bzzHashes.length != metadataUris.length) {
+            revert InvalidBatch();
+        }
+
+        nonce = _nonces[signer];
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                PUBLISH_BATCH_TYPEHASH,
+                signer,
+                _hashBzzHashes(bzzHashes),
+                _hashMetadataUris(metadataUris),
+                nonce,
+                deadline
+            )
+        );
+
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address recovered = ECDSA.recover(digest, v, r, s);
+
+        if (recovered != signer) revert InvalidSignature();
+
+        _nonces[signer] = nonce + bzzHashes.length;
+    }
+
+    function _applyBatch(address signer, bytes32[] calldata bzzHashes, string[] calldata metadataUris) internal {
+        for (uint256 i = 0; i < bzzHashes.length; i++) {
+            bytes32 bzzHash = bzzHashes[i];
+
+            if (bzzHash == bytes32(0) || _publisherOf[bzzHash] != address(0)) {
+                revert AlreadyRegistered();
+            }
+
+            _publisherOf[bzzHash] = signer;
+            _metadataOf[bzzHash] = metadataUris[i];
+
+            emit ManifestPublished(signer, bzzHash, metadataUris[i], block.timestamp);
+        }
+    }
+
+    /*////////////////////////////////
+                    DIRECT PUBLISH
+    ///////////////////////////////*/
+
+    /// @notice Publish a Swarm manifest directly (caller pays gas)
+    /// @param bzzHash the reference hash from uploaded data via Swarm
+    /// @param metadataUri metadataURI as refrenced by bzzHash
+    function publishManifest(bytes32 bzzHash, string calldata metadataUri) external isRegistered(bzzHash) {
+        _setPublisher(bzzHash, msg.sender);
+        _setMetadata(bzzHash, metadataUri);
 
         emit ManifestPublished(msg.sender, bzzHash, metadataUri, block.timestamp);
     }
 
-    function getMetadata(bytes32 bzzHash) external view returns (string memory) {
-        return metadataOf[bzzHash];
+    /*/////////////////////////////////////////////////////
+                    SIGNATURE-BASE RELAY PUBLISH
+    /////////////////////////////////////////////////////////*/
+
+    function publishWithSig(
+        address signer,
+        bytes32 bzzHash,
+        string calldata metadataUri,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external isValidBzzHash(bzzHash) isRegistered(bzzHash) {
+        if (block.timestamp > deadline) revert SignatureExpired();
+
+        if (signer == address(0)) revert InvalidAddress();
+
+        uint256 nonce = _nonces[signer];
+        bytes32 structHash =
+            keccak256(abi.encode(PUBLISH_TYPEHASH, signer, bzzHash, keccak256(bytes(metadataUri)), nonce, deadline));
+
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address recovered = ECDSA.recover(digest, v, r, s);
+
+        if (recovered != signer) revert InvalidSignature();
+
+        _nonces[signer]++;
+
+        _setPublisher(bzzHash, signer);
+        _setMetadata(bzzHash, metadataUri);
+
+        emit ManifestPublished(signer, bzzHash, metadataUri, block.timestamp);
     }
 
-    function getPublisher(bytes32 bzzHash) external view returns (address) {
-        return publisherOf[bzzHash];
+    function publishBatchWithSig(
+        address signer,
+        bytes32[] calldata bzzHashes,
+        string[] calldata metadataUris,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        _validateBatchSignature(signer, bzzHashes, metadataUris, deadline, v, r, s);
+
+        _applyBatch(signer, bzzHashes, metadataUris);
     }
 
-    function updateMetadata(bytes32 bzzHash, string calldata metadataUri) external isPublisher(bzzHash) {
-        metadataOf[bzzHash] = metadataUri;
+    /// @notice Get metadata
+    /// @param bzzHash The reference hash
+    function getMetadata(bytes32 bzzHash) public view returns (string memory) {
+        return _metadataOf[bzzHash];
+    }
+
+    /// @notice Get publisher of a manifest
+    /// @param bzzHash The reference hash
+    function getPublisher(bytes32 bzzHash) public view returns (address) {
+        return _publisherOf[bzzHash];
+    }
+
+    function getNonce(address signer) external view returns (uint256) {
+        return _nonces[signer];
     }
 }

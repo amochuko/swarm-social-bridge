@@ -6,7 +6,10 @@
     "build": "pnpm hardhat build",
     "test:mocha": "pnpm hardhat test mocha --coverage",
     "test:solidity": "pnpm hardhat test solidity --coverage --gas-stats",
-    "test": "pnpm hardhat test --coverage --gas-stats",
+    "test": "pnpm hardhat test",
+    "test:coverage:gas-stats": "pnpm hardhat test --coverage --gas-stats",
+    "deploy:polygon:amoy": "pnpm hardhat ignition deploy ignition/modules/SwarmRegistry.ts --network polygonAmoy --verify",
+    "deploy:polygon:mainnet": "pnpm hardhat ignition deploy ignition/modules/SwarmRegistry.ts --network polygonMainnet --verify",
     "clean": "pnpm hardhat clean"
   },
   "devDependencies": {
@@ -26,5 +29,8 @@
     "hardhat": "^3.1.0",
     "mocha": "^11.7.5",
     "typescript": "~5.8.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
   }
 }

@@ -1,0 +1,30 @@
+{
+  "name": "@swarm-registry/registry-sdk",
+  "version": "0.0.1",
+  "description": "Polygon ↔ Swarm registry SDK with batch publishing and gas abstraction",
+  "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest",
+    "clean": "rm -rf ./dist",
+    "build": "npm run clean && tsc -p .",
+    "dev": "tsc --watch",
+    "start": "npm run build && node ./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@ethersphere/bee-js": "^9.8.1",
+    "ethers": "^6.15.0"
+  }
+}

@@ -24,14 +24,14 @@ export default defineConfig({
       type: "edr-simulated",
       chainType: "l1", // Ethereum mainnet and its testnets
     },
-    amoy: {
+    polygonAmoy: {
       type: "http",
       chainType: "generic",
       url: configVariable("AMOY_RPC_URL"),
       accounts: [configVariable("AMOY_PRIVATE_KEY")],
       ignition: {},
     },
-    polygon: {
+    polygonMainnet: {
       type: "http",
       chainType: "l1",
       url: configVariable("POLYGON_RPC_URL"),
