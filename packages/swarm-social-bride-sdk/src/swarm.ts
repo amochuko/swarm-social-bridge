@@ -16,10 +16,15 @@ export function createSwarmClient(config: SwarmClientConfig) {
     return { bzzHash: result.reference };
   }
 
-  async function downloadJSON<T>(bzzHash:string): Promise<T> {
-    const data = await bee.downloadData(bzzHash);;
+  async function downloadJSON<T>(bzzHash: string): Promise<T> {
+    const data = await bee.downloadData(bzzHash);
 
     const text = new TextDecoder().decode(data.toUint8Array());
     return JSON.parse(text) as T;
   }
+
+  return {
+    uploadJSON,
+    downloadJSON,
+  };
 }
