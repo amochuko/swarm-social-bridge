@@ -22,5 +22,8 @@
   "devDependencies": {
     "@types/node": "^22.19.1",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0"
   }
 }
