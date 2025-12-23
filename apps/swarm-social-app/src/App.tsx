@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { Header } from "./components/Header";
 import { Feed } from "./pages/feed";
-import { MessagePage } from "./pages/message";
 import { NewPost } from "./pages/new-post";
-import { ProfilePage } from "./pages/profile";
 import { useBeeNodeStore } from "./store/useBeeNodeStore";
 import { useProviderStore } from "./store/useProviderStore";
 import { swarm } from "./swarm";
@@ -30,35 +27,63 @@ function App() {
           console.error("Failed to get or create postage batch:", err);
         });
     }
-  }, [account, provider, setPostageBatchId]);
+  }, [account, provider, setPostageBatchId, setError]);
 
   return (
-    <div style={{ maxWidth: "1020px", margin: "0 auto" }}>
-      <Header />
-      <div>
-        {provider && account && (
-          <>
-            <h3>Swarm Social App</h3>
+    <>
+      {provider && account && (
+        <>
+          <NewPost onPost={(p) => setPosts([p, ...posts])} />
+          <Feed posts={posts} />
+        </>
+      )}
 
-            <ProfilePage />
-            <NewPost onPost={(p) => setPosts([p, ...posts])} />
-            <Feed posts={posts} />
-            <MessagePage />
-          </>
-        )}
+      {!provider && !account && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexDirection: "column",
+            marginTop: "120px",
+          }}
+        >
+          <h1>Swarm Social DApp</h1>
+          <p>Connect your wallet to get started.</p>
+        </div>
+      )}
 
-        {!provider && !account && (
-          <div>Connect your wallet to get started.</div>
-        )}
-
-        {error && (
-          <div style={{ color: "red" }}>
-            <strong>Error:</strong>{" "}
+      {provider && account && error && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "red",
+            marginTop: "24px",
+          }}
+        >
+          <span style={{ backgroundColor: "#f9c4c4ff", padding: "4px 8px" }}>
+            <strong>Error: </strong>
             {error instanceof Error ? error.message : error}
-          </div>
-        )}
-      </div>
-    </div>
+          </span>
+
+          {error instanceof Error &&
+            error.message === "No usable postage batch found" && (
+              <p
+                style={{
+                  backgroundColor: "#d4d4d4ff",
+                  padding: "4px 12px",
+                  color: "#333",
+                }}
+              >
+                &nbsp;– Please ensure you have a usable postage batch on the
+                connected Bee node.
+              </p>
+            )}
+        </div>
+      )}
+    </>
   );
 }
 

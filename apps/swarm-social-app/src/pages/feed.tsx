@@ -4,7 +4,17 @@ type FeedProps = {
 };
 export function Feed(props: FeedProps) {
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent:'center',
+        maxWidth: 480,
+        gap: 8,
+        margin: '0 auto',
+
+      }}
+    >
       <h3>Feed</h3>
       {props.posts.map((p) => (
         <div key={p.bzzHash}>
