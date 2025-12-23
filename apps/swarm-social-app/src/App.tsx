@@ -1,66 +1,54 @@
-import { BatchId, Bee } from '@ethersphere/bee-js'
-import { useState } from 'react'
-import { BEE_HOST } from './config'
+import { useEffect, useState } from "react";
+import "./App.css";
+import { WalletConnectButton } from "./components/WalletConnect";
+import { Feed } from "./pages/feed";
+import { MessagePage } from "./pages/message";
+import { NewPost } from "./pages/new-post";
+import { ProfilePage } from "./pages/profile";
+import { useBeeNodeStore } from "./store/useBeeNodeStore";
+import { useProviderStore } from "./store/useProviderStore";
+import { swarm } from "./swarm";
 
-export function App() {
-    const [batchId, setBatchId] = useState<BatchId | null>(null)
-    const [file, setFile] = useState<File | null>(null)
-    const [fileList, setFileList] = useState<FileList | null>(null)
-    const [swarmHash, setSwarmHash] = useState<string | null>(null)
+function App() {
+  const provider = useProviderStore((s) => s.provider);
+  const account = useProviderStore((s) => s.account);
+  const setPostageBatchId = useBeeNodeStore((b) => b.setPostageBatchId);
+  const postageBatchId = useBeeNodeStore((b) => b.postageBatchId);
 
-    const bee = new Bee(BEE_HOST)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [posts, setPosts] = useState<any[]>([]);
 
-    async function getOrCreatePostageBatch() {
-        const batches = await bee.getPostageBatches()
-        const usable = batches.find(x => x.usable)
+  useEffect(() => {
+    swarm.getOrCreatePostageBatch().then((p) => {
+      setPostageBatchId(p);
+    });
+  });
 
-        if (usable) {
-            setBatchId(usable.batchID)
-        } else {
-            setBatchId(await bee.createPostageBatch('500000000', 20))
-        }
-    }
-
-    async function uploadFile() {
-        if (!batchId) {
-            return
-        }
-        const result = await bee.uploadFile(batchId, file)
-        setSwarmHash(result.reference.toHex())
-        setFile(null)
-    }
-
-    async function uploadDirectory() {
-        if (!batchId || !fileList) {
-            return
-        }
-        const result = await bee.uploadFiles(batchId, fileList)
-        setSwarmHash(result.reference.toHex())
-        setFileList(null)
-    }
-
-    const directoryInputAttributes = {
-        webkitdirectory: '',
-        directory: '',
-        multiple: true
-    }
-
+  // Render loading until ready
+  if (!provider || !account) {
     return (
-        <div>
-            {!batchId && <button onClick={getOrCreatePostageBatch}>Get or create postage batch</button>}
-            {batchId && <p>Batch ID: {batchId.toHex()}</p>}
-            {batchId && !swarmHash && (
-                <div>
-                    <p>Single file upload</p>
-                    <input type="file" onChange={e => setFile(e.target.files![0])} />
-                    <button onClick={uploadFile}>Upload file</button>
+      <div>
+        <WalletConnectButton />
+        <p>Connect wallet and initialize FHE...</p>
+      </div>
+    );
+  }
 
-                    <p>Directory upload</p>
-                    <input type="file" onChange={e => setFileList(e.target.files)} {...directoryInputAttributes} />
-                    <button onClick={uploadDirectory}>Upload directory</button>
-                </div>
-            )}
-            {swarmHash && <a href={BEE_HOST + '/bzz/' + swarmHash}>Swarm hash: {swarmHash}</a>}
-        </div>
-    )
+  return (
+    <div style={{ padding: 20 }}>
+      <WalletConnectButton />
+      <h3>Swarm Social App</h3>
+      <p>Connected account: {account}</p>
+
+      <ProfilePage postageId="" />
+      <NewPost
+        postageId={postageBatchId!.toString()}
+        onPost={(p) => setPosts([p, ...posts])}
+      />
+      <Feed posts={posts} />
+      <MessagePage />
+    </div>
+  );
 }
+
+export default App;
