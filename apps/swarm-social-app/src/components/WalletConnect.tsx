@@ -54,7 +54,7 @@ export function WalletConnectButton() {
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    
+
     setProvider(ethProvider);
     setAccount(accounts[0]);
     localStorage.setItem("walletDisconnected", "false");
@@ -68,29 +68,31 @@ export function WalletConnectButton() {
     localStorage.setItem("walletDisconnected", "true"); // persist
   };
 
-  if (account) {
-    const short = `${account.slice(0, 6)}...${account.slice(-4)}`;
-    return (
-      <div className="flex gap-2">
-        <span className="px-3 py-2 bg-green-600 text-white rounded">
-          {short}
-        </span>
-        <button
-          className="px-3 py-2 bg-red-500 text-white rounded"
-          onClick={disconnect}
-        >
-          Disconnect
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <button
-      className="px-4 py-2 bg-blue-500 text-white rounded"
-      onClick={connect}
-    >
-      Connect Wallet
-    </button>
+    <div className="wallet-connect">
+      {account ? (
+        <div className="flex gap-12">
+          <span
+            className="px-3 py-2 bg-green-600 text-white rounded"
+            style={{}}
+          >
+            {`${account.slice(0, 6)}...${account.slice(-4)}`}
+          </span>
+          <button
+            className="px-3 py-2 bg-red-500 text-white rounded"
+            onClick={disconnect}
+          >
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={connect}
+        >
+          Connect Wallet
+        </button>
+      )}
+    </div>
   );
 }
