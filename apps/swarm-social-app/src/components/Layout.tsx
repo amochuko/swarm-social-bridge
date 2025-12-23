@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import Footer from "./Footer";
 import { Header } from "./Header";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function Layout() {
   return (
@@ -14,11 +15,11 @@ export default function Layout() {
       }}
     >
       <Header />
-      {/* <main style={{ flex: 1 }}>{children}</main> */}
       <main style={{ flex: 1 }}>
-        <Outlet />
+        <ProtectedRoute redirectTo="/">
+          <Outlet />
+        </ProtectedRoute>
       </main>
-
       <Footer />
     </div>
   );
