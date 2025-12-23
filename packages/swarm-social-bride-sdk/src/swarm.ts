@@ -30,7 +30,7 @@ export function createSwarmClient(config: SwarmClientConfig) {
     if (usable) {
       return usable.batchID;
     } else {
-      return await bee.createPostageBatch("500000000", 20);
+      throw new Error("No usable postage batch found");
     }
   }
 
