@@ -19,17 +19,24 @@ function App() {
   const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
-    swarm.getOrCreatePostageBatch().then((p) => {
-      setPostageBatchId(p);
-    });
-  });
+    if (provider && account) {
+      swarm
+        .getOrCreatePostageBatch()
+        .then((p) => {
+          setPostageBatchId(p);
+        })
+        .catch((err) => {
+          console.error("Failed to get or create postage batch:", err);
+          alert("Failed to get or create postage batch:" + err.message);
+        });
+    }
+  }, [provider, account, postageBatchId, setPostageBatchId]);
 
   // Render loading until ready
   if (!provider || !account) {
     return (
       <div>
         <WalletConnectButton />
-        <p>Connect wallet and initialize FHE...</p>
       </div>
     );
   }
