@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { getRegistryClient } from "../sdk";
+import { useBeeNodeStore } from "../store/useBeeNodeStore";
 import { useProviderStore } from "../store/useProviderStore";
 import { swarm } from "../swarm";
 
 type NewPostProps = {
-  postageId: string;
   onPost: (p: unknown) => void;
 };
 
 export function NewPost(props: NewPostProps) {
   const provider = useProviderStore((s) => s.provider);
   const [content, setContent] = useState("");
+  const postageBatchId = useBeeNodeStore((b) => b.postageBatchId);
 
   async function publish() {
     const signer = await provider?.getSigner();
@@ -21,7 +22,10 @@ export function NewPost(props: NewPostProps) {
       createdAt: Date.now(),
     };
 
-    const { bzzHash } = await swarm.uploadJSON(post, props.postageId);
+    const { bzzHash } = await swarm.uploadJSON(
+      post,
+      postageBatchId!.toString()
+    );
     const swarmRegistry = await getRegistryClient();
 
     await swarmRegistry.publishBatch({

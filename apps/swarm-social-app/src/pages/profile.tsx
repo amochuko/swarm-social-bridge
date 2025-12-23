@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { getRegistryClient } from "../sdk";
+import { useBeeNodeStore } from "../store/useBeeNodeStore";
 import { useProviderStore } from "../store/useProviderStore";
 import { swarm } from "../swarm";
 
-type ProfilePageProps = {
-  postageId: string;
-};
-export function ProfilePage(props: ProfilePageProps) {
+export function ProfilePage() {
   const provider = useProviderStore((s) => s.provider);
+  const postageBatchId = useBeeNodeStore((b) => b.postageBatchId);
 
   const [handle, setHandle] = useState("");
   const [bio, setBio] = useState("");
@@ -21,7 +20,10 @@ export function ProfilePage(props: ProfilePageProps) {
     };
 
     const swarmRegistry = await getRegistryClient();
-    const { bzzHash } = await swarm.uploadJSON(profile, props.postageId);
+    const { bzzHash } = await swarm.uploadJSON(
+      profile,
+      postageBatchId!.toString()
+    );
     const signer = await provider?.getSigner();
 
     await swarmRegistry.publishBatch({
