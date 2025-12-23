@@ -38,14 +38,53 @@ export function NewPost(props: NewPostProps) {
   }
 
   return (
-    <div>
-      <textarea
-        placeholder="Write something..."
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
-
-      <button onClick={publish}>Post</button>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        marginBottom: 24,
+        alignItems: "center",
+        padding: 16,
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 480,
+          gap: 8,
+        }}
+      >
+        <textarea
+          id="post"
+          style={{ height: 80 , padding: 8,  }}
+          placeholder="Write something..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+        <div
+          className="post-btn"
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            style={{
+              minWidth: 120,
+              fontWidth: "bold",
+              padding: "8px 16px",
+              cursor: `${content === "" ? "not-allowed" : "pointer"}`,
+            }}
+            onClick={publish}
+            disabled={content === ""}
+          >
+            Post
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
