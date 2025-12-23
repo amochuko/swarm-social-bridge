@@ -23,8 +23,20 @@ export function createSwarmClient(config: SwarmClientConfig) {
     return JSON.parse(text) as T;
   }
 
+  async function getOrCreatePostageBatch() {
+    const batches = await bee.getPostageBatches();
+    const usable = batches.find((x) => x.usable);
+
+    if (usable) {
+      return usable.batchID;
+    } else {
+      return await bee.createPostageBatch("500000000", 20);
+    }
+  }
+
   return {
     uploadJSON,
     downloadJSON,
+    getOrCreatePostageBatch,
   };
 }
