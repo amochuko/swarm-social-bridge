@@ -35,22 +35,64 @@ export function ProfilePage() {
   }
 
   return (
-    <div>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        marginBottom: 24,
+        alignItems: "center",
+        padding: 16,
+        gap: 8,
+      }}
+    >
       <h3>Create Profile</h3>
-      <input
-        type="text"
-        placeholder="Handle"
-        value={handle}
-        onChange={(e) => setHandle(e.target.value)}
-      />
-      <br />
-      <textarea
-        placeholder="Bio"
-        value={bio}
-        onChange={(e) => setBio(e.target.value)}
-      />
-      <br />
-      <button onClick={saveProfile}>Save Profile</button>
+      
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 480,
+          gap: 8,
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Handle"
+          value={handle}
+          style={{ height: 24, padding: 8 }}
+          onChange={(e) => setHandle(e.target.value)}
+        />
+
+        <textarea
+          id="Bio"
+          style={{ height: 80, padding: 8 }}
+          // placeholder="Write something..."
+          placeholder="Bio..."
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+        />
+        <div
+          className="post-btn"
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            style={{
+              minWidth: 120,
+              fontWidth: "bold",
+              padding: "8px 16px",
+              // cursor: `${content === "" ? "not-allowed" : "pointer"}`,
+            }}
+            onClick={saveProfile}
+            // disabled={content === ""}
+          >
+            Save Profile
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
